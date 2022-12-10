@@ -22,6 +22,7 @@
 #pragma once
 
 #include <cstdio>
+#include <source_location>
 
 #include "cstring_view.hpp"
 
@@ -55,14 +56,8 @@ void                          Z_FreeTags(int lowtag, int hightag);
 [[maybe_unused]] void         Z_DumpHeap(int lowtag, int hightag);
 [[maybe_unused]] void         Z_FileDumpHeap(FILE * f);
 void                          Z_CheckHeap();
-void                          Z_ChangeTag2(void * ptr, int tag, cstring_view file, int line);
+void                          Z_ChangeTag(void * ptr, int tag, std::source_location src = std::source_location::current());
 [[maybe_unused]] void         Z_ChangeUser(void * ptr, void ** user);
 [[maybe_unused]] std::size_t  Z_FreeMemory();
 [[maybe_unused]] std::size_t  Z_ZoneSize();
 
-//
-// This is used to get the local FILE:LINE info from CPP
-// prior to really call the function in question.
-//
-#define Z_ChangeTag(p, t) \
-  Z_ChangeTag2((p), (t), __FILE__, __LINE__)

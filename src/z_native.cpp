@@ -374,20 +374,20 @@ void Z_CheckHeap() {
 // Z_ChangeTag
 //
 
-void Z_ChangeTag2(void * ptr, int tag, cstring_view file, int line) {
+void Z_ChangeTag(void * ptr, int tag, std::source_location src) {
   auto * byte_ptr = static_cast<uint8_t *>(ptr);
   auto * block    = reinterpret_cast<memblock_t *>(byte_ptr - sizeof(memblock_t));
 
   if (block->id != ZONEID)
     I_Error("%s:%i: Z_ChangeTag: block without a ZONEID!",
-            file.c_str(),
-            line);
+            src.file_name(),
+            src.line());
 
   if (tag >= PU_PURGELEVEL && block->user == nullptr)
     I_Error("%s:%i: Z_ChangeTag: an owner is required "
             "for purgable blocks",
-            file.c_str(),
-            line);
+            src.file_name(),
+            src.line());
 
   // Remove the block from its current list, and rehook it into
   // its new list.

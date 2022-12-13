@@ -144,10 +144,10 @@ static void ScanForBlock(void * start, void * end) {
           fmt::fprintf(stderr,
                        "%p has dangling pointer into freed block "
                        "%p (%p -> %p)\n",
-                       reinterpret_cast<void *>(mem),
+                       static_cast<void *>(mem),
                        start,
-                       reinterpret_cast<void *>(&mem[i]),
-                       reinterpret_cast<void *>(mem[i]));
+                       static_cast<void *>(&mem[i]),
+                       static_cast<void *>(mem[i]));
         }
       }
     }
@@ -342,7 +342,7 @@ void Z_FreeTags(int lowtag,
                                  int hightag) {
   fmt::printf("zone size: %i  location: %p\n",
               mainzone->size,
-              reinterpret_cast<void *>(mainzone));
+              static_cast<void *>(mainzone));
 
   fmt::printf("tag range: %i to %i\n",
               lowtag,
@@ -351,9 +351,9 @@ void Z_FreeTags(int lowtag,
   for (memblock_t * block = mainzone->blocklist.next;; block = block->next) {
     if (block->tag >= lowtag && block->tag <= hightag)
       fmt::printf("block:%p    size:%7i    user:%p    tag:%3i\n",
-                  reinterpret_cast<void *>(block),
+                  static_cast<void *>(block),
                   block->size,
-                  reinterpret_cast<void *>(block->user),
+                  static_cast<void *>(block->user),
                   block->tag);
 
     if (block->next == &mainzone->blocklist) {
@@ -376,10 +376,10 @@ void Z_FreeTags(int lowtag,
 // Z_FileDumpHeap
 //
 [[maybe_unused]] void Z_FileDumpHeap(FILE * f) {
-  fmt::fprintf(f, "zone size: %i  location: %p\n", mainzone->size, reinterpret_cast<void *>(mainzone));
+  fmt::fprintf(f, "zone size: %i  location: %p\n", mainzone->size, static_cast<void *>(mainzone));
 
   for (memblock_t * block = mainzone->blocklist.next;; block = block->next) {
-    fmt::fprintf(f, "block:%p    size:%7i    user:%p    tag:%3i\n", reinterpret_cast<void *>(block), block->size, reinterpret_cast<void *>(block->user), block->tag);
+    fmt::fprintf(f, "block:%p    size:%7i    user:%p    tag:%3i\n", static_cast<void *>(block), block->size, static_cast<void *>(block->user), block->tag);
 
     if (block->next == &mainzone->blocklist) {
       // all blocks have been hit

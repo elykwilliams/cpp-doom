@@ -35,7 +35,7 @@ using memblock_t = struct memblock_s;
 struct memblock_s {
   int          id; // = ZONEID
   int          tag;
-  int          size;
+  std::size_t  size;
   void **      user;
   memblock_t * prev;
   memblock_t * next;
@@ -147,7 +147,7 @@ void Z_Free(void * ptr) {
 //
 // Returns true if any blocks were freed.
 
-static bool ClearCache(int size) {
+static bool ClearCache(std::size_t size) {
   memblock_t * next_block = nullptr;
   memblock_t * block      = allocated_blocks[PU_CACHE];
 
@@ -170,7 +170,7 @@ static bool ClearCache(int size) {
   // Search backwards through the list freeing blocks until we have
   // freed the amount of memory required.
 
-  int remaining = size;
+  std::size_t remaining = size;
 
   while (remaining > 0) {
     if (block == nullptr) {
@@ -202,7 +202,7 @@ static bool ClearCache(int size) {
 // You can pass a nullptr user if the tag is < PU_PURGELEVEL.
 //
 
-void * Z_Malloc(int size, int tag, void * user) {
+void * Z_Malloc(size_t size, int tag, void * user) {
   if (tag < 0 || tag >= PU_NUM_TAGS || tag == PU_FREE) {
     I_Error("Z_Malloc: attempted to allocate a block with an invalid "
             "tag: %i",
@@ -218,10 +218,10 @@ void * Z_Malloc(int size, int tag, void * user) {
   memblock_t * newblock = nullptr;
 
   while (newblock == nullptr) {
-    newblock = static_cast<memblock_t *>(malloc(sizeof(memblock_t) + static_cast<unsigned long>(size)));
+    newblock = static_cast<memblock_t *>(malloc(sizeof(memblock_t) + size));
 
     if (newblock == nullptr) {
-      if (!ClearCache(static_cast<int>(sizeof(memblock_t) + static_cast<unsigned long>(size)))) {
+      if (!ClearCache(sizeof(memblock_t) + size)) {
         I_Error("Z_Malloc: failed on allocation of %i bytes", size);
       }
     }
@@ -417,12 +417,12 @@ void Z_ChangeTag2(void * ptr, int tag, cstring_view file, int line) {
 // Z_FreeMemory
 //
 
-[[maybe_unused]] int Z_FreeMemory() {
+[[maybe_unused]] std::size_t Z_FreeMemory() {
   // Limited by the system??
 
-  return -1;
+  return 0;
 }
 
-[[maybe_unused]] unsigned int Z_ZoneSize() {
+[[maybe_unused]] std::size_t Z_ZoneSize() {
   return 0;
 }

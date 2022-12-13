@@ -30,7 +30,7 @@ using atexit_func_t = void (*)();
 // Called by startup code
 // to get the ammount of memory to malloc
 // for the zone management.
-uint8_t * I_ZoneBase(int * size);
+uint8_t * I_ZoneBase(std::size_t * size);
 
 bool I_ConsoleStdout();
 

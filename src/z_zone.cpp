@@ -41,7 +41,7 @@ constexpr auto MEM_ALIGN = sizeof(void *);
 constexpr auto ZONEID    = 0x1d4a11;
 
 struct memblock_t {
-  int                 size; // including the header and possibly tiny fragments
+  std::size_t         size; // including the header and possibly tiny fragments
   void **             user;
   int                 tag; // PU_FREE if this is free
   int                 id;  // should be ZONEID
@@ -51,7 +51,7 @@ struct memblock_t {
 
 struct memzone_t {
   // total bytes malloced, including header
-  int size;
+  std::size_t size;
 
   // start / end cap for linked list
   memblock_t blocklist;
@@ -83,7 +83,7 @@ static bool        scan_on_free;
   // a free block.
   block->tag = PU_FREE;
 
-  block->size = static_cast<int>(static_cast<unsigned long>(zone->size) - sizeof(memzone_t));
+  block->size = zone->size - sizeof(memzone_t);
 }
 
 //
@@ -91,7 +91,7 @@ static bool        scan_on_free;
 //
 void Z_Init() {
   memblock_t * block = nullptr;
-  int          size  = 0;
+  std::size_t      size  = 0;
 
   mainzone       = reinterpret_cast<memzone_t *>(I_ZoneBase(&size));
   mainzone->size = size;
@@ -110,7 +110,7 @@ void Z_Init() {
   // free block
   block->tag = PU_FREE;
 
-  block->size = static_cast<int>(static_cast<unsigned long>(mainzone->size) - sizeof(memzone_t));
+  block->size = mainzone->size - sizeof(memzone_t);
 
   // [Deliberately undocumented]
   // Zone memory debugging flag. If set, memory is zeroed after it is freed
@@ -137,9 +137,9 @@ static void ScanForBlock(void * start, void * end) {
       // Scan for pointers on the assumption that pointers are aligned
       // on word boundaries (word size depending on pointer size):
       void ** mem = reinterpret_cast<void **>(reinterpret_cast<uint8_t *>(block) + sizeof(memblock_t));
-      int     len = static_cast<int>((static_cast<unsigned long>(block->size) - sizeof(memblock_t)) / sizeof(void *));
+      std::size_t len = (block->size - sizeof(memblock_t)) / sizeof(void *));
 
-      for (int i = 0; i < len; ++i) {
+      for (std::size_t i = 0; i < len; ++i) {
         if (start <= mem[i] && mem[i] <= end) {
           fmt::fprintf(stderr,
                        "%p has dangling pointer into freed block "
@@ -178,7 +178,7 @@ void Z_Free(void * ptr) {
   // If the -zonezero flag is provided, we zero out the block on free
   // to break code that depends on reading freed memory.
   if (zero_on_free) {
-    std::memset(ptr, 0, static_cast<unsigned long>(block->size) - sizeof(memblock_t));
+    std::memset(ptr, 0, (block->size - sizeof(memblock_t));
   }
   if (scan_on_free) {
     ScanForBlock(ptr,
@@ -218,10 +218,10 @@ void Z_Free(void * ptr) {
 constexpr auto MINFRAGMENT = 64;
 
 void *
-    Z_Malloc(int    size,
+    Z_Malloc(std::size_t    size,
              int    tag,
              void * user) {
-  size = static_cast<int>((static_cast<unsigned long>(size) + MEM_ALIGN - 1) & ~(MEM_ALIGN - 1));
+  size = (size + MEM_ALIGN - 1) & ~(MEM_ALIGN - 1);
 
   // scan through the block list,
   // looking for the first free block
@@ -229,7 +229,7 @@ void *
   // throwing out any purgable blocks along the way.
 
   // account for size of block header
-  size = size + static_cast<int>(sizeof(memblock_t));
+  size = size + sizeof(memblock_t);
 
   // if there is a free block behind the rover,
   //  back up over them
@@ -275,7 +275,7 @@ void *
   } while (base->tag != PU_FREE || base->size < size);
 
   // found a block big enough
-  int extra = base->size - size;
+  std::size_t extra = base->size - size;
 
   if (extra > MINFRAGMENT) {
     // there will be a free fragment after the allocated block
@@ -452,8 +452,8 @@ void Z_ChangeTag2(void * ptr, int tag, cstring_view file, int line) {
 //
 // Z_FreeMemory
 //
-[[maybe_unused]] int Z_FreeMemory() {
-  int free = 0;
+[[maybe_unused]] std::size_t Z_FreeMemory() {
+  std::size_t free = 0;
 
   for (memblock_t * block = mainzone->blocklist.next;
        block != &mainzone->blocklist;
@@ -465,6 +465,6 @@ void Z_ChangeTag2(void * ptr, int tag, cstring_view file, int line) {
   return free;
 }
 
-[[maybe_unused]] unsigned int Z_ZoneSize() {
-  return static_cast<unsigned int>(mainzone->size);
+[[maybe_unused]] std::size_t Z_ZoneSize() {
+  return mainzone->size;
 }

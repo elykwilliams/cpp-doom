@@ -72,7 +72,7 @@ void I_Tactile(int, int, int) {
 // by trying progressively smaller zone sizes until one is found that
 // works.
 
-static uint8_t * AutoAllocMemory(int * size, int default_ram, int min_ram) {
+static uint8_t * AutoAllocMemory(std::size_t * size, int default_ram, int min_ram) {
   // Allocate the zone memory.  This loop tries progressively smaller
   // zone sizes until a size is found that can be allocated.
   // If we used the -mb command line parameter, only the parameter
@@ -91,7 +91,7 @@ static uint8_t * AutoAllocMemory(int * size, int default_ram, int min_ram) {
 
     *size = default_ram * 1024 * 1024;
 
-    zonemem = static_cast<uint8_t *>(malloc(static_cast<size_t>(*size)));
+    zonemem = static_cast<uint8_t *>(malloc(*size));
 
     // Failed to allocate?  Reduce zone size until we reach a size
     // that is acceptable.
@@ -104,7 +104,7 @@ static uint8_t * AutoAllocMemory(int * size, int default_ram, int min_ram) {
   return zonemem;
 }
 
-uint8_t * I_ZoneBase(int * size) {
+uint8_t * I_ZoneBase(std::size_t * size) {
   static int i = 1;
 
   //!

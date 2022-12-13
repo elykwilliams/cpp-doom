@@ -146,7 +146,6 @@ void Z_Free(void * ptr) {
 // Returns true if any blocks were freed.
 
 static bool ClearCache(std::size_t size) {
-  memblock_t * next_block = nullptr;
   memblock_t * block      = allocated_blocks[PU_CACHE];
 
   if (block == nullptr) {
@@ -177,7 +176,7 @@ static bool ClearCache(std::size_t size) {
       break;
     }
 
-    next_block = block->prev;
+    auto * prev_block = block->prev;
 
     Z_RemoveBlock(block);
 
@@ -189,7 +188,7 @@ static bool ClearCache(std::size_t size) {
 
     free(block);
 
-    block = next_block;
+    block = prev_block;
   }
 
   return true;
@@ -251,12 +250,11 @@ void * Z_Malloc(size_t size, int tag, void * user) {
 
 void Z_FreeTags(int lowtag, int hightag) {
   for (int i = lowtag; i <= hightag; ++i) {
-    memblock_t * next = nullptr;
 
     // Free all in this chain
 
     for (memblock_t * block = allocated_blocks[i]; block != nullptr;) {
-      next = block->next;
+      auto * next = block->next;
 
       // Free this block
 

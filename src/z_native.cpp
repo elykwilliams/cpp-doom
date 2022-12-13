@@ -30,9 +30,7 @@
 
 constexpr auto ZONEID = 0x1d4a11;
 
-using memblock_t = struct memblock_s;
-
-struct memblock_s {
+struct memblock_t {
   int          id; // = ZONEID
   int          tag;
   std::size_t  size;

@@ -355,10 +355,10 @@ void Z_FreeTags(int lowtag, int hightag) {
 void Z_CheckHeap() {
   // Check all chains
 
-  for (int i = 0; i < PU_NUM_TAGS; ++i) {
+  for (auto block : allocated_blocks) {
     memblock_t * prev = nullptr;
 
-    for (memblock_t * block = allocated_blocks[i]; block != nullptr; block = block->next) {
+    for (; block != nullptr; block = block->next) {
       if (block->id != ZONEID) {
         I_Error("Z_CheckHeap: Block without a ZONEID!");
       }

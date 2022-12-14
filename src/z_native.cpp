@@ -167,9 +167,9 @@ static bool ClearCache(std::size_t size) {
   // Search backwards through the list freeing blocks until we have
   // freed the amount of memory required.
 
-  std::size_t remaining = size;
+  std::size_t cleared = 0;
 
-  while (remaining > 0) {
+  while (cleared < size) {
     if (block == nullptr) {
       // No blocks left to free; we've done our best.
 
@@ -180,7 +180,7 @@ static bool ClearCache(std::size_t size) {
 
     Z_RemoveBlock(block);
 
-    remaining -= block->size;
+    cleared += block->size;
 
     if (block->user) {
       *block->user = nullptr;

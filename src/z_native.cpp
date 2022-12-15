@@ -28,16 +28,8 @@
 #include "i_system.hpp"
 #include "z_zone.hpp"
 
-constexpr auto ZONEID = 0x1d4a11;
+using namespace Z;
 
-struct memblock_t {
-  int          id; // = ZONEID
-  int          tag;
-  std::size_t  size;
-  void **      user;
-  memblock_t * prev;
-  memblock_t * next;
-};
 
 // Linked list of allocated blocks for each tag type
 
@@ -120,8 +112,7 @@ void Z_Init() {
 // Z_Free
 //
 void Z_Free(void * ptr) {
-  auto * byte_ptr = static_cast<uint8_t *>(ptr);
-  auto * block    = reinterpret_cast<memblock_t *>(byte_ptr - sizeof(memblock_t));
+  memblock_t * block = get_header(ptr);
 
   if (block->id != ZONEID) {
     I_Error("Z_Free: freed a pointer without ZONEID");
@@ -234,8 +225,7 @@ void * Z_Malloc(size_t size, int tag, void * user) {
 
   Z_InsertBlock(newblock);
 
-  auto * data   = reinterpret_cast<unsigned char *>(newblock);
-  void * result = data + sizeof(memblock_t);
+  void * result = get_data(newblock);
 
   if (user != nullptr) {
     *newblock->user = result;
@@ -375,8 +365,7 @@ void Z_CheckHeap() {
 //
 
 void Z_ChangeTag2(void * ptr, int tag, cstring_view file, int line) {
-  auto * byte_ptr = static_cast<uint8_t *>(ptr);
-  auto * block    = reinterpret_cast<memblock_t *>(byte_ptr - sizeof(memblock_t));
+  memblock_t * block = get_header(ptr);
 
   if (block->id != ZONEID)
     I_Error("%s:%i: Z_ChangeTag: block without a ZONEID!",
@@ -398,8 +387,7 @@ void Z_ChangeTag2(void * ptr, int tag, cstring_view file, int line) {
 }
 
 [[maybe_unused]] void Z_ChangeUser(void * ptr, void ** user) {
-  uint8_t *    byte_ptr = static_cast<uint8_t *>(ptr);
-  memblock_t * block    = reinterpret_cast<memblock_t *>(byte_ptr - sizeof(memblock_t));
+  memblock_t * block = get_header(ptr);
 
   if (block->id != ZONEID) {
     I_Error("Z_ChangeUser: Tried to change user for invalid block!");

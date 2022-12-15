@@ -26,6 +26,7 @@
 
 #include "z_zone.hpp"
 
+using namespace Z;
 //
 // ZONE MEMORY ALLOCATION
 //
@@ -38,16 +39,6 @@
 //
 
 constexpr auto MEM_ALIGN = sizeof(void *);
-constexpr auto ZONEID    = 0x1d4a11;
-
-struct memblock_t {
-  std::size_t         size; // including the header and possibly tiny fragments
-  void **             user;
-  int                 tag; // PU_FREE if this is free
-  int                 id;  // should be ZONEID
-  struct memblock_t * next;
-  struct memblock_t * prev;
-};
 
 struct memzone_t {
   // total bytes malloced, including header
@@ -72,7 +63,7 @@ static bool        scan_on_free;
   // set the entire zone to one free block
   zone->blocklist.next =
       zone->blocklist.prev =
-          block = reinterpret_cast<memblock_t *>(reinterpret_cast<uint8_t *>(zone) + sizeof(memzone_t));
+          block = reinterpret_cast<memblock_t *>(get_data<memzone_t>(zone));
 
   zone->blocklist.user = reinterpret_cast<void **>(zone);
   zone->blocklist.tag  = PU_STATIC;
@@ -99,7 +90,7 @@ void Z_Init() {
   // set the entire zone to one free block
   mainzone->blocklist.next =
       mainzone->blocklist.prev =
-          block = reinterpret_cast<memblock_t *>(reinterpret_cast<uint8_t *>(mainzone) + sizeof(memzone_t));
+          block = reinterpret_cast<memblock_t *>(get_data<memzone_t>(mainzone));
 
   mainzone->blocklist.user = reinterpret_cast<void **>(mainzone);
   mainzone->blocklist.tag  = PU_STATIC;
@@ -136,8 +127,8 @@ static void ScanForBlock(void * start, void * end) {
     if (tag == PU_STATIC || tag == PU_LEVEL || tag == PU_LEVSPEC) {
       // Scan for pointers on the assumption that pointers are aligned
       // on word boundaries (word size depending on pointer size):
-      void ** mem = reinterpret_cast<void **>(reinterpret_cast<uint8_t *>(block) + sizeof(memblock_t));
-      std::size_t len = (block->size - sizeof(memblock_t)) / sizeof(void *));
+      void ** mem = reinterpret_cast<void **>(get_data(block));
+      std::size_t len = (block->size - sizeof(memblock_t)) / sizeof(void *);
 
       for (std::size_t i = 0; i < len; ++i) {
         if (start <= mem[i] && mem[i] <= end) {
@@ -160,7 +151,7 @@ static void ScanForBlock(void * start, void * end) {
 // Z_Free
 //
 void Z_Free(void * ptr) {
-  auto * block = reinterpret_cast<memblock_t *>(reinterpret_cast<uint8_t *>(ptr) - sizeof(memblock_t));
+  memblock_t * block = get_header(ptr);
 
   if (block->id != ZONEID)
     I_Error("Z_Free: freed a pointer without ZONEID");
@@ -178,7 +169,7 @@ void Z_Free(void * ptr) {
   // If the -zonezero flag is provided, we zero out the block on free
   // to break code that depends on reading freed memory.
   if (zero_on_free) {
-    std::memset(ptr, 0, (block->size - sizeof(memblock_t));
+    std::memset(ptr, 0, (block->size - sizeof(memblock_t)));
   }
   if (scan_on_free) {
     ScanForBlock(ptr,
@@ -264,7 +255,7 @@ void *
 
         // the rover can be the base block
         base = base->prev;
-        Z_Free(reinterpret_cast<uint8_t *>(rover) + sizeof(memblock_t));
+        Z_Free(get_data(rover));
         base  = base->next;
         rover = base->next;
       }
@@ -298,7 +289,7 @@ void *
   base->user = reinterpret_cast<void **>(user);
   base->tag  = tag;
 
-  void * result = (reinterpret_cast<uint8_t *>(base) + sizeof(memblock_t));
+  void * result = get_data(base);
 
   if (base->user) {
     *base->user = result;
@@ -330,7 +321,7 @@ void Z_FreeTags(int lowtag,
       continue;
 
     if (block->tag >= lowtag && block->tag <= hightag)
-      Z_Free(reinterpret_cast<uint8_t *>(block) + sizeof(memblock_t));
+      Z_Free(get_data(block));
   }
 }
 
@@ -428,7 +419,7 @@ void Z_CheckHeap() {
 // Z_ChangeTag
 //
 void Z_ChangeTag2(void * ptr, int tag, cstring_view file, int line) {
-  auto * block = reinterpret_cast<memblock_t *>(reinterpret_cast<uint8_t *>(ptr) - sizeof(memblock_t));
+  memblock_t * block = get_header(ptr);
 
   if (block->id != ZONEID)
     I_Error("%s:%i: Z_ChangeTag: block without a ZONEID!",
@@ -445,7 +436,7 @@ void Z_ChangeTag2(void * ptr, int tag, cstring_view file, int line) {
 }
 
 [[maybe_unused]] void Z_ChangeUser(void * ptr, void ** user) {
-  auto * block = reinterpret_cast<memblock_t *>(reinterpret_cast<uint8_t *>(ptr) - sizeof(memblock_t));
+  memblock_t * block = get_header(ptr);
 
   if (block->id != ZONEID) {
     I_Error("Z_ChangeUser: Tried to change user for invalid block!");

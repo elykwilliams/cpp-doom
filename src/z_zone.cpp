@@ -266,12 +266,11 @@ void *
   } while (base->tag != PU_FREE || base->size < size);
 
   // found a block big enough
-  std::size_t extra = base->size - size;
 
-  if (extra > MINFRAGMENT) {
+  if (base->size > MINFRAGMENT + size) {
     // there will be a free fragment after the allocated block
     auto * newblock = reinterpret_cast<memblock_t *>(reinterpret_cast<uint8_t *>(base) + size);
-    newblock->size  = extra;
+    newblock->size  = base->size - size;
 
     newblock->tag        = PU_FREE;
     newblock->user       = nullptr;

@@ -84,7 +84,7 @@ void Z_Init() {
   memblock_t * block = nullptr;
   std::size_t      size  = 0;
 
-  mainzone       = reinterpret_cast<memzone_t *>(I_ZoneBase(&size));
+  mainzone       = static_cast<memzone_t *>(I_ZoneBase(&size));
   mainzone->size = size;
 
   // set the entire zone to one free block

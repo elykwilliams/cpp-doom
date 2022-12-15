@@ -72,13 +72,13 @@ void I_Tactile(int, int, int) {
 // by trying progressively smaller zone sizes until one is found that
 // works.
 
-static uint8_t * AutoAllocMemory(std::size_t * size, int default_ram, int min_ram) {
+static void * AutoAllocMemory(std::size_t * size, int default_ram, int min_ram) {
   // Allocate the zone memory.  This loop tries progressively smaller
   // zone sizes until a size is found that can be allocated.
   // If we used the -mb command line parameter, only the parameter
   // provided is accepted.
 
-  uint8_t * zonemem = nullptr;
+  void * zonemem = nullptr;
 
   while (zonemem == nullptr) {
     // We need a reasonable minimum amount of RAM to start.
@@ -91,7 +91,7 @@ static uint8_t * AutoAllocMemory(std::size_t * size, int default_ram, int min_ra
 
     *size = default_ram * 1024 * 1024;
 
-    zonemem = static_cast<uint8_t *>(malloc(*size));
+    zonemem = malloc(*size);
 
     // Failed to allocate?  Reduce zone size until we reach a size
     // that is acceptable.
@@ -104,7 +104,7 @@ static uint8_t * AutoAllocMemory(std::size_t * size, int default_ram, int min_ra
   return zonemem;
 }
 
-uint8_t * I_ZoneBase(std::size_t * size) {
+void * I_ZoneBase(std::size_t * size) {
   static int i = 1;
 
   //!
@@ -128,7 +128,7 @@ uint8_t * I_ZoneBase(std::size_t * size) {
     min_ram = default_ram + 1;
   }
 
-  uint8_t * zonemem = AutoAllocMemory(size, default_ram * i, min_ram * i);
+  void * zonemem = AutoAllocMemory(size, default_ram * i, min_ram * i);
 
   // [crispy] if called again, allocate another zone twice as big
   i *= 2;

@@ -20,7 +20,6 @@
 
 #include <fmt/printf.h>
 
-#include "doomtype.hpp"
 #include "i_system.hpp"
 #include "m_argv.hpp"
 

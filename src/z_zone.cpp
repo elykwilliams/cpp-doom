@@ -173,7 +173,7 @@ void Z_Free(void * ptr) {
   }
   if (scan_on_free) {
     ScanForBlock(ptr,
-                 reinterpret_cast<uint8_t *>(ptr) + block->size - sizeof(memblock_t));
+                 reinterpret_cast<std::byte *>(ptr) + block->size - sizeof(memblock_t));
   }
 
   memblock_t * other = block->prev;
@@ -269,7 +269,7 @@ void *
 
   if (base->size > MINFRAGMENT + size) {
     // there will be a free fragment after the allocated block
-    auto * newblock = reinterpret_cast<memblock_t *>(reinterpret_cast<uint8_t *>(base) + size);
+    auto * newblock = reinterpret_cast<memblock_t *>(reinterpret_cast<std::byte *>(base) + size);
     newblock->size  = base->size - size;
 
     newblock->tag        = PU_FREE;
@@ -351,7 +351,7 @@ void Z_FreeTags(int lowtag,
       break;
     }
 
-    if (reinterpret_cast<uint8_t *>(block) + block->size != reinterpret_cast<uint8_t *>(block->next))
+    if (reinterpret_cast<std::byte *>(block) + block->size != reinterpret_cast<std::byte *>(block->next))
       fmt::printf("ERROR: block size does not touch the next block\n");
 
     if (block->next->prev != block)
@@ -382,7 +382,7 @@ void Z_FreeTags(int lowtag,
       break;
     }
 
-    if (reinterpret_cast<uint8_t *>(block) + block->size != reinterpret_cast<uint8_t *>(block->next))
+    if (reinterpret_cast<std::byte *>(block) + block->size != reinterpret_cast<std::byte *>(block->next))
       fmt::fprintf(f, "ERROR: block size does not touch the next block\n");
 
     if (block->next->prev != block)
@@ -403,7 +403,7 @@ void Z_CheckHeap() {
       break;
     }
 
-    if (reinterpret_cast<uint8_t *>(block) + block->size != reinterpret_cast<uint8_t *>(block->next))
+    if (reinterpret_cast<std::byte *>(block) + block->size != reinterpret_cast<std::byte *>(block->next))
       I_Error("Z_CheckHeap: block size does not touch the next block\n");
 
     if (block->next->prev != block)

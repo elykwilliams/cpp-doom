@@ -30,7 +30,8 @@ set(PACKAGE_LICENSE "GNU General Public License, version 2")
 # subdirectories should go here.  Use judiciously.
 if(MSVC)
     add_definitions("/D_CRT_SECURE_NO_WARNINGS" "/D_CRT_SECURE_NO_DEPRECATE"
-                    "/D_CRT_NONSTDC_NO_DEPRECATE")
+                    "/D_CRT_NONSTDC_NO_DEPRECATE"
+                    "/wd4324") #ignore error coming from catch2
 else()
     add_compile_options("-Wall"
                         "-Wredundant-decls")

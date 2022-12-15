@@ -61,3 +61,30 @@ void                          Z_ChangeTag(void * ptr, int tag, std::source_locat
 [[maybe_unused]] std::size_t  Z_FreeMemory();
 [[maybe_unused]] std::size_t  Z_ZoneSize();
 
+namespace Z{
+
+struct memblock_t {
+  std::size_t         size; // including the header and possibly tiny fragments
+  void **             user;
+  int                 tag; // PU_FREE if this is free
+  int                 id;  // should be ZONEID
+  struct memblock_t * next;
+  struct memblock_t * prev;
+};
+
+constexpr auto ZONEID = 0x1d4a11;
+
+template<typename T=memblock_t>
+void* get_data(T* header){
+  auto * byte_ptr = reinterpret_cast<std::byte *>(header);
+  return byte_ptr + sizeof(T);
+}
+
+template<typename T=memblock_t>
+T* get_header(void* data){
+  auto * byte_ptr = reinterpret_cast<std::byte *>(data);
+  return reinterpret_cast<memblock_t *>(byte_ptr - sizeof(T));
+
+}
+
+}

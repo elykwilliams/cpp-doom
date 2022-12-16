@@ -209,7 +209,7 @@ void * Z_Malloc(size_t size, int tag, void * user) {
 
     if (newblock == nullptr) {
       if (!ClearCache(sizeof(memblock_t) + size)) {
-        I_Error("Z_Malloc: failed on allocation of %i bytes", size);
+        I_Error("Z_Malloc: failed on allocation of %zu bytes", size);
       }
     }
   }

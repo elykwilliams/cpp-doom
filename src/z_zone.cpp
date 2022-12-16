@@ -20,7 +20,6 @@
 
 #include <fmt/printf.h>
 
-#include "doomtype.hpp"
 #include "i_system.hpp"
 #include "m_argv.hpp"
 
@@ -84,7 +83,7 @@ void Z_Init() {
   memblock_t * block = nullptr;
   std::size_t      size  = 0;
 
-  mainzone       = reinterpret_cast<memzone_t *>(I_ZoneBase(&size));
+  mainzone       = static_cast<memzone_t *>(I_ZoneBase(&size));
   mainzone->size = size;
 
   // set the entire zone to one free block
@@ -172,8 +171,7 @@ void Z_Free(void * ptr) {
     std::memset(ptr, 0, (block->size - sizeof(memblock_t)));
   }
   if (scan_on_free) {
-    ScanForBlock(ptr,
-                 reinterpret_cast<std::byte *>(ptr) + block->size - sizeof(memblock_t));
+    ScanForBlock(ptr, get_next(get_header(ptr)));
   }
 
   memblock_t * other = block->prev;
@@ -269,7 +267,7 @@ void *
 
   if (base->size > MINFRAGMENT + size) {
     // there will be a free fragment after the allocated block
-    auto * newblock = reinterpret_cast<memblock_t *>(reinterpret_cast<std::byte *>(base) + size);
+    auto * newblock = get_next(base);
     newblock->size  = base->size - size;
 
     newblock->tag        = PU_FREE;
@@ -351,7 +349,7 @@ void Z_FreeTags(int lowtag,
       break;
     }
 
-    if (reinterpret_cast<std::byte *>(block) + block->size != reinterpret_cast<std::byte *>(block->next))
+    if (get_next(block) != block->next)
       fmt::printf("ERROR: block size does not touch the next block\n");
 
     if (block->next->prev != block)
@@ -382,7 +380,7 @@ void Z_FreeTags(int lowtag,
       break;
     }
 
-    if (reinterpret_cast<std::byte *>(block) + block->size != reinterpret_cast<std::byte *>(block->next))
+    if (get_next(block) != block->next)
       fmt::fprintf(f, "ERROR: block size does not touch the next block\n");
 
     if (block->next->prev != block)
@@ -403,7 +401,7 @@ void Z_CheckHeap() {
       break;
     }
 
-    if (reinterpret_cast<std::byte *>(block) + block->size != reinterpret_cast<std::byte *>(block->next))
+    if (get_next(block) != block->next)
       I_Error("Z_CheckHeap: block size does not touch the next block\n");
 
     if (block->next->prev != block)

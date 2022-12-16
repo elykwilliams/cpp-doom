@@ -87,4 +87,10 @@ T* get_header(void* data){
 
 }
 
+template<typename T>
+T * get_next(T* header){
+  auto * byte_ptr = reinterpret_cast<std::byte *>(header);
+  return reinterpret_cast<T *>(byte_ptr + header->size);
+}
+
 }

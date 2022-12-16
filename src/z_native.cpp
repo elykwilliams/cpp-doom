@@ -24,7 +24,6 @@
 
 #include <fmt/printf.h>
 
-#include "doomtype.hpp"
 #include "i_system.hpp"
 #include "z_zone.hpp"
 
